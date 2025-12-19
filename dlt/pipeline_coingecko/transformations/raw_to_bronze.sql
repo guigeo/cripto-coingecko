@@ -1,4 +1,4 @@
-CREATE OR REFRESH STREAMING LIVE TABLE coingecko.bronze.coingecko_coins
+CREATE OR REFRESH STREAMING LIVE TABLE coingecko.bronze.bronze_moeda
 COMMENT "Bronze — extração de criptos a partir de raw no volume"
 TBLPROPERTIES ("quality" = "bronze")
 AS

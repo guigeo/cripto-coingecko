@@ -1,0 +1,405 @@
+{
+  "datasets": [
+    {
+      "name": "a39a255d",
+      "displayName": "Relatorio - Top 20 Market Cap Médio)",
+      "queryLines": [
+        "SELECT\r\n",
+        "  id_moeda, simbolo, nome_moeda,\r\n",
+        "  valor_mercado_ultimo_dia_bi_usd,\r\n",
+        "  volume_ultimo_dia_bi_usd,\r\n",
+        "  qtd_dias_com_dados,\r\n",
+        "  data_ultimo_dia\r\n",
+        "FROM coingecko.gold.gold_resumo_moeda\r\n",
+        "ORDER BY valor_mercado_ultimo_dia_usd DESC\r\n",
+        "LIMIT 20;"
+      ]
+    },
+    {
+      "name": "10976382",
+      "displayName": "Preço Atual das Moedas (Última Data Disponível)",
+      "queryLines": [
+        "WITH ultima_data AS (\r\n",
+        "  SELECT max(data_referencia) AS data_mais_recente\r\n",
+        "  FROM coingecko.silver.silver_fato_moeda_diaria\r\n",
+        ")\r\n",
+        "SELECT\r\n",
+        "  s.data_referencia AS data_mais_recente,\r\n",
+        "  s.id_moeda,\r\n",
+        "  s.simbolo,\r\n",
+        "  s.nome_moeda,\r\n",
+        "  s.preco_medio_usd AS preco_usd\r\n",
+        "FROM coingecko.silver.silver_fato_moeda_diaria s\r\n",
+        "JOIN ultima_data u\r\n",
+        "  ON s.data_referencia = u.data_mais_recente\r\n",
+        "ORDER BY s.preco_medio_usd DESC;\r\n"
+      ]
+    },
+    {
+      "name": "a4101159",
+      "displayName": "Pizza – Market Cap",
+      "queryLines": [
+        "WITH base AS (\r\n",
+        "  SELECT\r\n",
+        "    nome_moeda,\r\n",
+        "    simbolo,\r\n",
+        "    valor_mercado_ultimo_dia_usd\r\n",
+        "  FROM coingecko.gold.gold_resumo_moeda\r\n",
+        "),\r\n",
+        "\r\n",
+        "total AS (\r\n",
+        "  SELECT\r\n",
+        "    SUM(valor_mercado_ultimo_dia_usd) AS total_mercado_usd\r\n",
+        "  FROM base\r\n",
+        ")\r\n",
+        "\r\n",
+        "SELECT\r\n",
+        "  b.nome_moeda,\r\n",
+        "  b.simbolo,\r\n",
+        "  ROUND(b.valor_mercado_ultimo_dia_usd / t.total_mercado_usd * 100, 2)\r\n",
+        "    AS participacao_percentual\r\n",
+        "FROM base b\r\n",
+        "CROSS JOIN total t\r\n",
+        "ORDER BY participacao_percentual DESC\r\n",
+        "LIMIT 10;\r\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "1b4aa2d8",
+      "displayName": "Preço Atual das Moedas",
+      "layout": [
+        {
+          "widget": {
+            "name": "2bf6feff",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "10976382",
+                  "fields": [
+                    {
+                      "name": "sum(preco_usd)",
+                      "expression": "SUM(`preco_usd`)"
+                    },
+                    {
+                      "name": "nome_moeda",
+                      "expression": "`nome_moeda`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(preco_usd)",
+                  "axis": {
+                    "title": "Preço em USD"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    },
+                    "significantFigures": {
+                      "type": "all"
+                    }
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "nome_moeda",
+                  "axis": {
+                    "title": "Moeda"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 10
+                    },
+                    "sort": {
+                      "by": "x-reversed"
+                    }
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Preço Atual das Moedas (Última Data Disponível)"
+              },
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 10
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    },
+    {
+      "name": "3b1ab3c3",
+      "displayName": "Ranking Atual de Moedas por Valor de Mercado",
+      "layout": [
+        {
+          "widget": {
+            "name": "442309bc",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "a39a255d",
+                  "fields": [
+                    {
+                      "name": "sum(volume_ultimo_dia_bi_usd)",
+                      "expression": "SUM(`volume_ultimo_dia_bi_usd`)"
+                    },
+                    {
+                      "name": "nome_moeda",
+                      "expression": "`nome_moeda`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(volume_ultimo_dia_bi_usd)",
+                  "axis": {
+                    "title": "Volume ultimo dia (bilhões)"
+                  },
+                  "scale": {
+                    "type": "quantitative",
+                    "fn": {
+                      "type": "symlog"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "nome_moeda",
+                  "axis": {
+                    "title": "Moeda"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "x-reversed"
+                    }
+                  }
+                },
+                "label": {
+                  "show": true,
+                  "text": {
+                    "fieldName": "sum(volume_ultimo_dia_bi_usd)",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 2
+                      },
+                      "significantFigures": {
+                        "type": "all"
+                      },
+                      "hideGroupSeparator": false
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Ranking Atual de Moedas por Valor de Mercado"
+              },
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "fontColor"
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 9
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    },
+    {
+      "name": "121f403d",
+      "displayName": "Pizza – Market Cap",
+      "layout": [
+        {
+          "widget": {
+            "name": "68d6b889",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "a4101159",
+                  "fields": [
+                    {
+                      "name": "sum(participacao_percentual)",
+                      "expression": "SUM(`participacao_percentual`)"
+                    },
+                    {
+                      "name": "nome_moeda",
+                      "expression": "`nome_moeda`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "sum(participacao_percentual)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "nome_moeda",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Pizza – Market Cap"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 9
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
