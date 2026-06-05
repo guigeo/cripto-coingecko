@@ -1,0 +1,13 @@
+bundle:
+  name: cripto-coingecko
+
+include:
+  - resources/*.yml
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-f1990488-7bac.cloud.databricks.com
+      profile: "My Free Edition"
