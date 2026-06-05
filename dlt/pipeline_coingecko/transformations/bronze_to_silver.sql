@@ -1,6 +1,7 @@
-CREATE OR REFRESH LIVE TABLE coingecko.silver.silver_moeda_diaria
-CONSTRAINT valid_data  EXPECT (data_referencia IS NOT NULL) ON VIOLATION DROP ROW
-CONSTRAINT valid_preco EXPECT (preco_medio_usd > 0)         ON VIOLATION DROP ROW
+CREATE OR REFRESH LIVE TABLE coingecko.silver.silver_moeda_diaria (
+  CONSTRAINT valid_data  EXPECT (data_referencia IS NOT NULL) ON VIOLATION DROP ROW,
+  CONSTRAINT valid_preco EXPECT (preco_medio_usd > 0)         ON VIOLATION DROP ROW
+)
 COMMENT "Métricas diárias por moeda — uma linha por (moeda, dia) com preço médio, min e max."
 TBLPROPERTIES ("quality" = "silver")
 AS
