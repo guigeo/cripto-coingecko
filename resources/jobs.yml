@@ -11,7 +11,7 @@ resources:
       tasks:
         - task_key: api_to_raw
           spark_python_task:
-            python_file: ./src/coingecko/ingestion/api_to_raw.py
+            python_file: ../src/coingecko/ingestion/api_to_raw.py
           environment_key: default
 
       environments:

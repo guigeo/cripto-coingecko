@@ -3,13 +3,15 @@ resources:
     coingecko_dlt:
       name: "CoinGecko - DLT Pipeline"
       catalog: coingecko
+      schema: default
+      serverless: true
       development: true
       libraries:
         - file:
-            path: ./dlt/pipeline_coingecko/transformations/raw_to_bronze.sql
+            path: ../dlt/pipeline_coingecko/transformations/raw_to_bronze.sql
         - file:
-            path: ./dlt/pipeline_coingecko/transformations/bronze_to_silver.sql
+            path: ../dlt/pipeline_coingecko/transformations/bronze_to_silver.sql
         - file:
-            path: ./dlt/pipeline_coingecko/transformations/silver_to_gold.sql
+            path: ../dlt/pipeline_coingecko/transformations/silver_to_gold.sql
       configuration:
         input_path_raw: "/Volumes/coingecko/raw/raw"
