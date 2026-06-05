@@ -14,7 +14,6 @@ SELECT
     CAST(current_price AS DOUBLE)    AS current_price,
     CAST(market_cap    AS DOUBLE)    AS market_cap,
     CAST(total_volume  AS DOUBLE)    AS total_volume,
-    CAST(dt            AS DATE)      AS dt,
     current_timestamp()              AS ingested_at
 FROM cloud_files(
   "${input_path_raw}",
