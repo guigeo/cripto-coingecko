@@ -1,7 +1,7 @@
 CREATE OR REFRESH LIVE TABLE coingecko.gold.gold_ranking_moedas_diario
+CONSTRAINT valid_data EXPECT (data_referencia IS NOT NULL) ON VIOLATION DROP ROW
 COMMENT "Ranking diário de moedas por valor de mercado e por volume."
 TBLPROPERTIES ("quality" = "gold")
-CONSTRAINT valid_data EXPECT (data_referencia IS NOT NULL) ON VIOLATION DROP ROW
 AS
 SELECT
   data_referencia,
@@ -17,9 +17,9 @@ FROM coingecko.silver.silver_moeda_diaria;
 
 
 CREATE OR REFRESH LIVE TABLE coingecko.gold.gold_variacao_preco_d1
+CONSTRAINT valid_data EXPECT (data_referencia IS NOT NULL) ON VIOLATION DROP ROW
 COMMENT "Variação do preço médio vs dia anterior por moeda."
 TBLPROPERTIES ("quality" = "gold")
-CONSTRAINT valid_data EXPECT (data_referencia IS NOT NULL) ON VIOLATION DROP ROW
 AS
 WITH base AS (
   SELECT
@@ -44,9 +44,9 @@ FROM base;
 
 
 CREATE OR REFRESH LIVE TABLE coingecko.gold.gold_resumo_mercado_diario
+CONSTRAINT valid_data EXPECT (data_referencia IS NOT NULL) ON VIOLATION DROP ROW
 COMMENT "Resumo diário do mercado para painéis e KPIs."
 TBLPROPERTIES ("quality" = "gold")
-CONSTRAINT valid_data EXPECT (data_referencia IS NOT NULL) ON VIOLATION DROP ROW
 AS
 WITH base AS (
   SELECT data_referencia, id_moeda, simbolo, nome_moeda,
@@ -117,9 +117,9 @@ LEFT JOIN top_volume tv     ON a.data_referencia = tv.data_referencia;
 
 
 CREATE OR REFRESH LIVE TABLE coingecko.gold.gold_resumo_moeda
+CONSTRAINT valid_moeda EXPECT (id_moeda IS NOT NULL) ON VIOLATION DROP ROW
 COMMENT "Resumo histórico por moeda com variação total, valores do último dia e estatísticas de preço."
 TBLPROPERTIES ("quality" = "gold")
-CONSTRAINT valid_moeda EXPECT (id_moeda IS NOT NULL) ON VIOLATION DROP ROW
 AS
 WITH base AS (
   SELECT data_referencia, id_moeda, simbolo, nome_moeda,
