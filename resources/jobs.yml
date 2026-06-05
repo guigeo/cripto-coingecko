@@ -10,14 +10,5 @@ resources:
 
       tasks:
         - task_key: api_to_raw
-          spark_python_task:
-            python_file: ../src/coingecko/ingestion/api_to_raw.py
-          environment_key: default
-
-      environments:
-        - environment_key: default
-          spec:
-            client: "1"
-            dependencies:
-              - requests>=2.32
-              - pandas>=2.2
+          notebook_task:
+            notebook_path: ../notebooks/run_api_to_raw.py
