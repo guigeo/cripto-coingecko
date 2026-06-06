@@ -1,405 +1,598 @@
 {
   "datasets": [
     {
-      "name": "a39a255d",
-      "displayName": "Relatorio - Top 20 Market Cap Médio)",
+      "name": "ds_kpis",
+      "displayName": "KPIs Mercado",
       "queryLines": [
-        "SELECT\r\n",
-        "  id_moeda, simbolo, nome_moeda,\r\n",
-        "  valor_mercado_ultimo_dia_bi_usd,\r\n",
-        "  volume_ultimo_dia_bi_usd,\r\n",
-        "  qtd_dias_com_dados,\r\n",
-        "  data_ultimo_dia\r\n",
-        "FROM coingecko.gold.gold_resumo_moeda\r\n",
-        "ORDER BY valor_mercado_ultimo_dia_usd DESC\r\n",
-        "LIMIT 20;"
+        "SELECT ",
+        "    data_referencia, ",
+        "    ROUND(valor_mercado_total_usd / 1e12, 2) AS market_cap_tri_usd, ",
+        "    ROUND(volume_total_usd / 1e9, 2) AS volume_bi_usd, ",
+        "    ROUND(top_valor_mercado_usd * 1.0 / valor_mercado_total_usd, 4) AS btc_dominance, ",
+        "    qtd_moedas ",
+        "FROM coingecko.gold.gold_resumo_mercado_diario ",
+        "ORDER BY data_referencia DESC ",
+        "LIMIT 1 "
       ]
     },
     {
-      "name": "10976382",
-      "displayName": "Preço Atual das Moedas (Última Data Disponível)",
+      "name": "ds_serie_mercado",
+      "displayName": "Série Histórica 90 Dias",
       "queryLines": [
-        "WITH ultima_data AS (\r\n",
-        "  SELECT max(data_referencia) AS data_mais_recente\r\n",
-        "  FROM coingecko.silver.silver_fato_moeda_diaria\r\n",
-        ")\r\n",
-        "SELECT\r\n",
-        "  s.data_referencia AS data_mais_recente,\r\n",
-        "  s.id_moeda,\r\n",
-        "  s.simbolo,\r\n",
-        "  s.nome_moeda,\r\n",
-        "  s.preco_medio_usd AS preco_usd\r\n",
-        "FROM coingecko.silver.silver_fato_moeda_diaria s\r\n",
-        "JOIN ultima_data u\r\n",
-        "  ON s.data_referencia = u.data_mais_recente\r\n",
-        "ORDER BY s.preco_medio_usd DESC;\r\n"
+        "SELECT ",
+        "    data_referencia, ",
+        "    ROUND(valor_mercado_total_usd / 1e12, 2) AS market_cap_tri_usd, ",
+        "    ROUND(volume_total_usd / 1e9, 2) AS volume_bi_usd ",
+        "FROM coingecko.gold.gold_resumo_mercado_diario ",
+        "WHERE data_referencia >= date_sub(current_date(), 90) ",
+        "ORDER BY data_referencia "
       ]
     },
     {
-      "name": "a4101159",
-      "displayName": "Pizza – Market Cap",
+      "name": "ds_ranking_hoje",
+      "displayName": "Ranking Hoje Top 10",
       "queryLines": [
-        "WITH base AS (\r\n",
-        "  SELECT\r\n",
-        "    nome_moeda,\r\n",
-        "    simbolo,\r\n",
-        "    valor_mercado_ultimo_dia_usd\r\n",
-        "  FROM coingecko.gold.gold_resumo_moeda\r\n",
-        "),\r\n",
-        "\r\n",
-        "total AS (\r\n",
-        "  SELECT\r\n",
-        "    SUM(valor_mercado_ultimo_dia_usd) AS total_mercado_usd\r\n",
-        "  FROM base\r\n",
-        ")\r\n",
-        "\r\n",
-        "SELECT\r\n",
-        "  b.nome_moeda,\r\n",
-        "  b.simbolo,\r\n",
-        "  ROUND(b.valor_mercado_ultimo_dia_usd / t.total_mercado_usd * 100, 2)\r\n",
-        "    AS participacao_percentual\r\n",
-        "FROM base b\r\n",
-        "CROSS JOIN total t\r\n",
-        "ORDER BY participacao_percentual DESC\r\n",
-        "LIMIT 10;\r\n"
+        "SELECT ",
+        "    rank_valor_mercado AS ranking, ",
+        "    nome_moeda, ",
+        "    simbolo, ",
+        "    ROUND(preco_medio_usd, 2) AS preco_usd, ",
+        "    ROUND(valor_mercado_medio_usd / 1e9, 2) AS market_cap_bi_usd, ",
+        "    ROUND(volume_medio_usd / 1e9, 2) AS volume_bi_usd ",
+        "FROM coingecko.gold.gold_ranking_moedas_diario ",
+        "WHERE data_referencia = (SELECT MAX(data_referencia) FROM coingecko.gold.gold_ranking_moedas_diario) ",
+        "ORDER BY rank_valor_mercado ",
+        "LIMIT 10 "
+      ]
+    },
+    {
+      "name": "ds_variacao_hoje",
+      "displayName": "Variação D1 Hoje",
+      "queryLines": [
+        "SELECT ",
+        "    nome_moeda, ",
+        "    simbolo, ",
+        "    ROUND(preco_medio_usd, 4) AS preco_usd, ",
+        "    ROUND(variacao_pct_d1, 2) AS variacao_pct, ",
+        "    ROUND(variacao_abs_d1_usd, 4) AS variacao_abs_usd, ",
+        "    CASE WHEN variacao_pct_d1 >= 0 THEN 'Alta' ELSE 'Baixa' END AS direcao ",
+        "FROM coingecko.gold.gold_variacao_preco_d1 ",
+        "WHERE data_referencia = (SELECT MAX(data_referencia) FROM coingecko.gold.gold_variacao_preco_d1) ",
+        "  AND variacao_pct_d1 IS NOT NULL ",
+        "ORDER BY variacao_pct_d1 DESC "
+      ]
+    },
+    {
+      "name": "ds_top_gainers",
+      "displayName": "Top 8 Altas do Dia",
+      "queryLines": [
+        "SELECT ",
+        "    nome_moeda, ",
+        "    ROUND(variacao_pct_d1, 2) AS variacao_pct ",
+        "FROM coingecko.gold.gold_variacao_preco_d1 ",
+        "WHERE data_referencia = (SELECT MAX(data_referencia) FROM coingecko.gold.gold_variacao_preco_d1) ",
+        "  AND variacao_pct_d1 IS NOT NULL ",
+        "ORDER BY variacao_pct_d1 DESC ",
+        "LIMIT 8 "
+      ]
+    },
+    {
+      "name": "ds_top_losers",
+      "displayName": "Top 8 Quedas do Dia",
+      "queryLines": [
+        "SELECT ",
+        "    nome_moeda, ",
+        "    ROUND(variacao_pct_d1, 2) AS variacao_pct ",
+        "FROM coingecko.gold.gold_variacao_preco_d1 ",
+        "WHERE data_referencia = (SELECT MAX(data_referencia) FROM coingecko.gold.gold_variacao_preco_d1) ",
+        "  AND variacao_pct_d1 IS NOT NULL ",
+        "ORDER BY variacao_pct_d1 ASC ",
+        "LIMIT 8 "
+      ]
+    },
+    {
+      "name": "ds_historico_top",
+      "displayName": "Top 8 Valorizações Históricas",
+      "queryLines": [
+        "SELECT nome_moeda, ROUND(variacao_percentual_total, 1) AS variacao_pct_total ",
+        "FROM coingecko.gold.gold_resumo_moeda ",
+        "WHERE qtd_dias_com_dados >= 30 ",
+        "  AND variacao_percentual_total > 0 ",
+        "ORDER BY variacao_percentual_total DESC ",
+        "LIMIT 8 "
+      ]
+    },
+    {
+      "name": "ds_historico_bot",
+      "displayName": "Top 8 Quedas Históricas",
+      "queryLines": [
+        "SELECT nome_moeda, ROUND(variacao_percentual_total, 1) AS variacao_pct_total ",
+        "FROM coingecko.gold.gold_resumo_moeda ",
+        "WHERE qtd_dias_com_dados >= 30 ",
+        "  AND variacao_percentual_total < -5 ",
+        "ORDER BY variacao_percentual_total ASC ",
+        "LIMIT 8 "
+      ]
+    },
+    {
+      "name": "ds_historico_moedas",
+      "displayName": "Histórico por Moeda",
+      "queryLines": [
+        "SELECT ",
+        "    nome_moeda, ",
+        "    simbolo, ",
+        "    ROUND(preco_primeiro_dia_usd, 4) AS preco_inicio_usd, ",
+        "    ROUND(preco_ultimo_dia_usd, 4) AS preco_atual_usd, ",
+        "    ROUND(variacao_percentual_total, 1) AS variacao_pct_total, ",
+        "    ROUND(valor_mercado_ultimo_dia_bi_usd, 2) AS market_cap_bi_usd, ",
+        "    qtd_dias_com_dados ",
+        "FROM coingecko.gold.gold_resumo_moeda ",
+        "WHERE qtd_dias_com_dados >= 30 ",
+        "ORDER BY variacao_percentual_total DESC "
       ]
     }
   ],
   "pages": [
     {
-      "name": "1b4aa2d8",
-      "displayName": "Preço Atual das Moedas",
+      "name": "mercado",
+      "displayName": "Mercado",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
       "layout": [
         {
           "widget": {
-            "name": "2bf6feff",
-            "queries": [
-              {
-                "name": "main_query",
-                "query": {
-                  "datasetName": "10976382",
-                  "fields": [
-                    {
-                      "name": "sum(preco_usd)",
-                      "expression": "SUM(`preco_usd`)"
-                    },
-                    {
-                      "name": "nome_moeda",
-                      "expression": "`nome_moeda`"
-                    }
-                  ],
-                  "disaggregated": false
-                }
+            "name": "title-mercado",
+            "multilineTextboxSpec": {"lines": ["## Mercado de Criptomoedas"]}
+          },
+          "position": {"x": 0, "y": 0, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "subtitle-mercado",
+            "multilineTextboxSpec": {"lines": ["Market Cap, Volume 24h e Dominância BTC — top 50 criptos monitoradas diariamente via CoinGecko API"]}
+          },
+          "position": {"x": 0, "y": 1, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "kpi-market-cap",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_kpis",
+                "fields": [{"name": "market_cap_tri_usd", "expression": "`market_cap_tri_usd`"}],
+                "disaggregated": true
               }
-            ],
+            }],
             "spec": {
-              "version": 3,
-              "widgetType": "bar",
+              "version": 2,
+              "widgetType": "counter",
               "encodings": {
-                "x": {
-                  "fieldName": "sum(preco_usd)",
-                  "axis": {
-                    "title": "Preço em USD"
-                  },
+                "value": {
+                  "fieldName": "market_cap_tri_usd",
+                  "displayName": "Market Cap (USD T)",
                   "format": {
                     "type": "number-currency",
                     "currencyCode": "USD",
-                    "abbreviation": "compact",
-                    "decimalPlaces": {
-                      "type": "max",
-                      "places": 2
-                    },
-                    "significantFigures": {
-                      "type": "all"
-                    }
-                  },
-                  "scale": {
-                    "type": "quantitative"
+                    "decimalPlaces": {"type": "fixed", "places": 2}
                   }
-                },
-                "y": {
-                  "fieldName": "nome_moeda",
-                  "axis": {
-                    "title": "Moeda"
-                  },
-                  "scale": {
-                    "type": "categorical",
-                    "categorySize": {
-                      "type": "number-of-categories",
-                      "number": 10
-                    },
-                    "sort": {
-                      "by": "x-reversed"
-                    }
-                  }
-                },
-                "label": {
-                  "show": true
                 }
               },
-              "frame": {
-                "showTitle": true,
-                "title": "Preço Atual das Moedas (Última Data Disponível)"
-              },
-              "mark": {
-                "colors": [
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 5
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 2
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 3
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 4
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 5
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 6
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 7
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 8
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 9
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 10
-                  }
-                ]
-              }
+              "frame": {"title": "Market Cap Total (USD Trilhões)", "showTitle": true}
             }
           },
-          "position": {
-            "x": 0,
-            "y": 0,
-            "width": 6,
-            "height": 10
-          }
+          "position": {"x": 0, "y": 2, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-volume-24h",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_kpis",
+                "fields": [{"name": "volume_bi_usd", "expression": "`volume_bi_usd`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "volume_bi_usd",
+                  "displayName": "Volume 24h (USD B)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "decimalPlaces": {"type": "fixed", "places": 1}
+                  }
+                }
+              },
+              "frame": {"title": "Volume 24h (USD Bilhões)", "showTitle": true}
+            }
+          },
+          "position": {"x": 4, "y": 2, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "kpi-btc-dominance",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_kpis",
+                "fields": [{"name": "btc_dominance", "expression": "`btc_dominance`"}],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "btc_dominance",
+                  "displayName": "Dominância BTC",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {"type": "fixed", "places": 1}
+                  }
+                }
+              },
+              "frame": {"title": "Dominância Bitcoin", "showTitle": true}
+            }
+          },
+          "position": {"x": 8, "y": 2, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "section-evolucao",
+            "multilineTextboxSpec": {"lines": ["### Evolução do Mercado — Últimos 90 Dias"]}
+          },
+          "position": {"x": 0, "y": 5, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "chart-market-cap-serie",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_serie_mercado",
+                "fields": [
+                  {"name": "data_referencia", "expression": "`data_referencia`"},
+                  {"name": "market_cap_tri_usd", "expression": "`market_cap_tri_usd`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {"fieldName": "data_referencia", "scale": {"type": "temporal"}, "displayName": "Data"},
+                "y": {"fieldName": "market_cap_tri_usd", "scale": {"type": "quantitative"}, "displayName": "Market Cap (USD T)"}
+              },
+              "frame": {"title": "Market Cap Total (USD Trilhões)", "showTitle": true}
+            }
+          },
+          "position": {"x": 0, "y": 6, "width": 6, "height": 5}
+        },
+        {
+          "widget": {
+            "name": "chart-volume-serie",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_serie_mercado",
+                "fields": [
+                  {"name": "data_referencia", "expression": "`data_referencia`"},
+                  {"name": "volume_bi_usd", "expression": "`volume_bi_usd`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {"fieldName": "data_referencia", "scale": {"type": "temporal"}, "displayName": "Data"},
+                "y": {"fieldName": "volume_bi_usd", "scale": {"type": "quantitative"}, "displayName": "Volume (USD B)"}
+              },
+              "frame": {"title": "Volume Diário (USD Bilhões)", "showTitle": true}
+            }
+          },
+          "position": {"x": 6, "y": 6, "width": 6, "height": 5}
+        },
+        {
+          "widget": {
+            "name": "section-top10",
+            "multilineTextboxSpec": {"lines": ["### Top 10 por Market Cap"]}
+          },
+          "position": {"x": 0, "y": 11, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "table-top10",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_ranking_hoje",
+                "fields": [
+                  {"name": "ranking", "expression": "`ranking`"},
+                  {"name": "nome_moeda", "expression": "`nome_moeda`"},
+                  {"name": "simbolo", "expression": "`simbolo`"},
+                  {"name": "preco_usd", "expression": "`preco_usd`"},
+                  {"name": "market_cap_bi_usd", "expression": "`market_cap_bi_usd`"},
+                  {"name": "volume_bi_usd", "expression": "`volume_bi_usd`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {"fieldName": "ranking", "displayName": "#"},
+                  {"fieldName": "nome_moeda", "displayName": "Moeda"},
+                  {"fieldName": "simbolo", "displayName": "Símbolo"},
+                  {"fieldName": "preco_usd", "displayName": "Preço (USD)"},
+                  {"fieldName": "market_cap_bi_usd", "displayName": "Market Cap (USD B)"},
+                  {"fieldName": "volume_bi_usd", "displayName": "Volume 24h (USD B)"}
+                ]
+              },
+              "frame": {"title": "Top 10 Criptomoedas por Market Cap", "showTitle": true}
+            }
+          },
+          "position": {"x": 0, "y": 12, "width": 12, "height": 6}
         }
-      ],
-      "pageType": "PAGE_TYPE_CANVAS"
+      ]
     },
     {
-      "name": "3b1ab3c3",
-      "displayName": "Ranking Atual de Moedas por Valor de Mercado",
+      "name": "performance",
+      "displayName": "Performance Diária",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
       "layout": [
         {
           "widget": {
-            "name": "442309bc",
-            "queries": [
-              {
-                "name": "main_query",
-                "query": {
-                  "datasetName": "a39a255d",
-                  "fields": [
-                    {
-                      "name": "sum(volume_ultimo_dia_bi_usd)",
-                      "expression": "SUM(`volume_ultimo_dia_bi_usd`)"
-                    },
-                    {
-                      "name": "nome_moeda",
-                      "expression": "`nome_moeda`"
-                    }
-                  ],
-                  "disaggregated": false
-                }
+            "name": "title-performance",
+            "multilineTextboxSpec": {"lines": ["## Performance do Dia"]}
+          },
+          "position": {"x": 0, "y": 0, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "subtitle-performance",
+            "multilineTextboxSpec": {"lines": ["Maiores altas e quedas do dia — variação percentual vs fechamento anterior (D-1)"]}
+          },
+          "position": {"x": 0, "y": 1, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "chart-top-gainers",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_top_gainers",
+                "fields": [
+                  {"name": "nome_moeda", "expression": "`nome_moeda`"},
+                  {"name": "variacao_pct", "expression": "`variacao_pct`"}
+                ],
+                "disaggregated": true
               }
-            ],
+            }],
             "spec": {
               "version": 3,
               "widgetType": "bar",
               "encodings": {
                 "x": {
-                  "fieldName": "sum(volume_ultimo_dia_bi_usd)",
-                  "axis": {
-                    "title": "Volume ultimo dia (bilhões)"
-                  },
-                  "scale": {
-                    "type": "quantitative",
-                    "fn": {
-                      "type": "symlog"
-                    }
-                  }
+                  "scale": {"type": "quantitative"},
+                  "fields": [{"fieldName": "variacao_pct", "displayName": "Variação % D1"}]
                 },
-                "y": {
-                  "fieldName": "nome_moeda",
-                  "axis": {
-                    "title": "Moeda"
-                  },
-                  "scale": {
-                    "type": "categorical",
-                    "sort": {
-                      "by": "x-reversed"
-                    }
-                  }
-                },
-                "label": {
-                  "show": true,
-                  "text": {
-                    "fieldName": "sum(volume_ultimo_dia_bi_usd)",
-                    "format": {
-                      "type": "number-currency",
-                      "currencyCode": "USD",
-                      "abbreviation": "compact",
-                      "decimalPlaces": {
-                        "type": "exact",
-                        "places": 2
-                      },
-                      "significantFigures": {
-                        "type": "all"
-                      },
-                      "hideGroupSeparator": false
-                    }
-                  }
-                }
+                "y": {"fieldName": "nome_moeda", "scale": {"type": "categorical"}, "displayName": "Moeda"}
               },
-              "frame": {
-                "showTitle": true,
-                "title": "Ranking Atual de Moedas por Valor de Mercado"
-              },
-              "mark": {
-                "colors": [
-                  {
-                    "themeColorType": "fontColor"
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 2
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 3
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 4
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 5
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 6
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 7
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 8
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 9
-                  },
-                  {
-                    "themeColorType": "visualizationColors",
-                    "position": 10
-                  }
-                ]
-              }
+              "frame": {"title": "Top 8 Maiores Altas do Dia", "showTitle": true}
             }
           },
-          "position": {
-            "x": 0,
-            "y": 0,
-            "width": 6,
-            "height": 9
-          }
+          "position": {"x": 0, "y": 2, "width": 6, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "chart-top-losers",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_top_losers",
+                "fields": [
+                  {"name": "nome_moeda", "expression": "`nome_moeda`"},
+                  {"name": "variacao_pct", "expression": "`variacao_pct`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "scale": {"type": "quantitative"},
+                  "fields": [{"fieldName": "variacao_pct", "displayName": "Variação % D1"}]
+                },
+                "y": {"fieldName": "nome_moeda", "scale": {"type": "categorical"}, "displayName": "Moeda"}
+              },
+              "frame": {"title": "Top 8 Maiores Quedas do Dia", "showTitle": true}
+            }
+          },
+          "position": {"x": 6, "y": 2, "width": 6, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "section-variacao",
+            "multilineTextboxSpec": {"lines": ["### Variação Completa do Dia"]}
+          },
+          "position": {"x": 0, "y": 8, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "table-variacao-hoje",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_variacao_hoje",
+                "fields": [
+                  {"name": "nome_moeda", "expression": "`nome_moeda`"},
+                  {"name": "simbolo", "expression": "`simbolo`"},
+                  {"name": "preco_usd", "expression": "`preco_usd`"},
+                  {"name": "variacao_pct", "expression": "`variacao_pct`"},
+                  {"name": "variacao_abs_usd", "expression": "`variacao_abs_usd`"},
+                  {"name": "direcao", "expression": "`direcao`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {"fieldName": "nome_moeda", "displayName": "Moeda"},
+                  {"fieldName": "simbolo", "displayName": "Símbolo"},
+                  {"fieldName": "preco_usd", "displayName": "Preço (USD)"},
+                  {"fieldName": "variacao_pct", "displayName": "Variação %"},
+                  {"fieldName": "variacao_abs_usd", "displayName": "Variação USD"},
+                  {"fieldName": "direcao", "displayName": "Direção"}
+                ]
+              },
+              "frame": {"title": "Todas as Moedas — Variação D1", "showTitle": true}
+            }
+          },
+          "position": {"x": 0, "y": 9, "width": 12, "height": 7}
         }
-      ],
-      "pageType": "PAGE_TYPE_CANVAS"
+      ]
     },
     {
-      "name": "121f403d",
-      "displayName": "Pizza – Market Cap",
+      "name": "historico",
+      "displayName": "Análise Histórica",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
       "layout": [
         {
           "widget": {
-            "name": "68d6b889",
-            "queries": [
-              {
-                "name": "main_query",
-                "query": {
-                  "datasetName": "a4101159",
-                  "fields": [
-                    {
-                      "name": "sum(participacao_percentual)",
-                      "expression": "SUM(`participacao_percentual`)"
-                    },
-                    {
-                      "name": "nome_moeda",
-                      "expression": "`nome_moeda`"
-                    }
-                  ],
-                  "disaggregated": false
-                }
+            "name": "title-historico",
+            "multilineTextboxSpec": {"lines": ["## Análise Histórica"]}
+          },
+          "position": {"x": 0, "y": 0, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "subtitle-historico",
+            "multilineTextboxSpec": {"lines": ["Performance acumulada desde outubro/2025 — moedas com 30 ou mais dias de dados coletados"]}
+          },
+          "position": {"x": 0, "y": 1, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "chart-hist-gainers",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_historico_top",
+                "fields": [
+                  {"name": "nome_moeda", "expression": "`nome_moeda`"},
+                  {"name": "variacao_pct_total", "expression": "`variacao_pct_total`"}
+                ],
+                "disaggregated": true
               }
-            ],
+            }],
             "spec": {
               "version": 3,
-              "widgetType": "pie",
+              "widgetType": "bar",
               "encodings": {
-                "angle": {
-                  "fieldName": "sum(participacao_percentual)",
-                  "scale": {
-                    "type": "quantitative"
-                  },
-                  "axis": {
-                    "hideTitle": true
-                  }
+                "x": {
+                  "scale": {"type": "quantitative"},
+                  "fields": [{"fieldName": "variacao_pct_total", "displayName": "Variação % Total"}]
                 },
-                "color": {
-                  "fieldName": "nome_moeda",
-                  "scale": {
-                    "type": "categorical"
-                  }
-                },
-                "label": {
-                  "show": true
-                }
+                "y": {"fieldName": "nome_moeda", "scale": {"type": "categorical"}, "displayName": "Moeda"}
               },
-              "frame": {
-                "showTitle": true,
-                "title": "Pizza – Market Cap"
-              }
+              "frame": {"title": "Top 8 Maiores Valorizações desde out/2025", "showTitle": true}
             }
           },
-          "position": {
-            "x": 0,
-            "y": 0,
-            "width": 6,
-            "height": 9
-          }
+          "position": {"x": 0, "y": 2, "width": 6, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "chart-hist-losers",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_historico_bot",
+                "fields": [
+                  {"name": "nome_moeda", "expression": "`nome_moeda`"},
+                  {"name": "variacao_pct_total", "expression": "`variacao_pct_total`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "scale": {"type": "quantitative"},
+                  "fields": [{"fieldName": "variacao_pct_total", "displayName": "Variação % Total"}]
+                },
+                "y": {"fieldName": "nome_moeda", "scale": {"type": "categorical"}, "displayName": "Moeda"}
+              },
+              "frame": {"title": "Top 8 Maiores Quedas desde out/2025", "showTitle": true}
+            }
+          },
+          "position": {"x": 6, "y": 2, "width": 6, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "section-detalhe",
+            "multilineTextboxSpec": {"lines": ["### Detalhe por Moeda"]}
+          },
+          "position": {"x": 0, "y": 8, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "table-historico-moedas",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "ds_historico_moedas",
+                "fields": [
+                  {"name": "nome_moeda", "expression": "`nome_moeda`"},
+                  {"name": "simbolo", "expression": "`simbolo`"},
+                  {"name": "preco_inicio_usd", "expression": "`preco_inicio_usd`"},
+                  {"name": "preco_atual_usd", "expression": "`preco_atual_usd`"},
+                  {"name": "variacao_pct_total", "expression": "`variacao_pct_total`"},
+                  {"name": "market_cap_bi_usd", "expression": "`market_cap_bi_usd`"},
+                  {"name": "qtd_dias_com_dados", "expression": "`qtd_dias_com_dados`"}
+                ],
+                "disaggregated": true
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {"fieldName": "nome_moeda", "displayName": "Moeda"},
+                  {"fieldName": "simbolo", "displayName": "Símbolo"},
+                  {"fieldName": "preco_inicio_usd", "displayName": "Preço Inicial (USD)"},
+                  {"fieldName": "preco_atual_usd", "displayName": "Preço Atual (USD)"},
+                  {"fieldName": "variacao_pct_total", "displayName": "Variação % Total"},
+                  {"fieldName": "market_cap_bi_usd", "displayName": "Market Cap (USD B)"},
+                  {"fieldName": "qtd_dias_com_dados", "displayName": "Dias com Dados"}
+                ]
+              },
+              "frame": {"title": "Histórico Completo por Moeda (ordenado por Variação %)", "showTitle": true}
+            }
+          },
+          "position": {"x": 0, "y": 9, "width": 12, "height": 7}
         }
-      ],
-      "pageType": "PAGE_TYPE_CANVAS"
+      ]
     }
-  ],
-  "uiSettings": {
-    "theme": {
-      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
-    },
-    "applyModeEnabled": false
-  }
+  ]
 }
