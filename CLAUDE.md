@@ -21,6 +21,8 @@ resources/jobs.yml                      # Job agendado
 resources/pipelines.yml                 # Pipeline DLT declarado no bundle
 notebooks/run_api_to_raw.py             # Runner do job (notebook Databricks)
 notebooks/exploration.ipynb             # Exploração local (Databricks Connect)
+dash/Dash Coingecko.lvdash.json         # Dashboard AI/BI (fonte de verdade para re-deploy)
+.databricks-resources.json              # IDs de recursos deployados (dashboard ID)
 ```
 
 ---
@@ -82,6 +84,21 @@ O runner de notebook passa `argv=[]` para evitar conflito com `sys.argv` do Data
 - 2s de sleep entre moedas
 - Retry exponencial: 10s × tentativa em caso de 429
 - ~28 min para processar 1 dia com 50 moedas
+
+---
+
+## Dashboard AI/BI
+
+**ID:** `01f1613ceaad1ae895c7aaeec000bc58`
+**URL:** `https://dbc-f1990488-7bac.cloud.databricks.com/sql/dashboardsv3/01f1613ceaad1ae895c7aaeec000bc58`
+**Warehouse:** `d91dbe66eaa92d7b`
+
+O dashboard tem 3 páginas (Mercado, Performance Diária, Análise Histórica) com 9 datasets, todos
+apontando para tabelas gold. Para re-deploar, usar `manage_dashboard(action="create_or_update")`
+com o JSON de `dash/Dash Coingecko.lvdash.json` e `parent_path="/Workspace/Users/uepa.pap@gmail.com"`.
+
+**CRÍTICO ao editar o dashboard:** Testar TODAS as queries via `execute_sql` antes de fazer deploy.
+Cada `fieldName` nos encodings deve bater exatamente com o `name` em `query.fields`.
 
 ---
 

@@ -66,8 +66,10 @@ cripto-coingecko/
 │   ├── run_api_to_raw.py       # Runner do job (notebook Databricks)
 │   └── exploration.ipynb       # Exploração ad-hoc (Databricks Connect)
 │
-└── dash/
-    └── Dash Coingecko.lvdash.json  # Dashboard AI/BI
+├── dash/
+│   └── Dash Coingecko.lvdash.json  # Dashboard AI/BI (3 páginas)
+│
+└── .databricks-resources.json      # IDs de recursos deployados no workspace
 ```
 
 ---
@@ -151,6 +153,26 @@ databricks bundle run coingecko_dlt
 
 # Full refresh (rebuild completo)
 databricks bundle run coingecko_dlt --full-refresh-all
+```
+
+---
+
+## Dashboard AI/BI
+
+**URL:** `https://dbc-f1990488-7bac.cloud.databricks.com/sql/dashboardsv3/01f1613ceaad1ae895c7aaeec000bc58`
+
+3 páginas com dados das tabelas gold:
+
+| Página | Conteúdo |
+|---|---|
+| **Mercado** | KPIs (market cap, volume 24h, dominância BTC) + séries 90 dias + top 10 |
+| **Performance Diária** | Top 8 altas e quedas D1 + tabela completa de variação |
+| **Análise Histórica** | Maiores valorizações/quedas desde out/2025 + detalhe por moeda |
+
+Para re-deployar o dashboard via MCP:
+```bash
+# Editar dash/Dash Coingecko.lvdash.json e usar manage_dashboard(action="create_or_update")
+# O ID do dashboard deployado fica em .databricks-resources.json
 ```
 
 ---
