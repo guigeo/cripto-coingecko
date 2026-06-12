@@ -77,27 +77,27 @@ def resolve_date_range(args, spark) -> tuple[date, date]:
     return start_date, end_date
 
 
-def fetch_and_collect(client: CoinGeckoClient, coin_meta: dict, start_date: date, end_date: date) -> list[dict]:
-    all_records = []
+def fetch_day(client: CoinGeckoClient, coin_meta: dict, dt: date) -> list[dict]:
+    dt_from = int(datetime.combine(dt, datetime.min.time()).timestamp())
+    dt_to = int(datetime.combine(dt, datetime.max.time()).timestamp())
 
-    for single_date in pd.date_range(start_date, end_date):
-        dt = single_date.date()
-        dt_from = int(datetime.combine(dt, datetime.min.time()).timestamp())
-        dt_to = int(datetime.combine(dt, datetime.max.time()).timestamp())
+    log.info(f"Processando {dt} ({len(coin_meta)} moedas)...")
 
-        log.info(f"Processando {dt} ({len(coin_meta)} moedas)...")
-
-        for coin_id, meta in coin_meta.items():
+    day_records = []
+    for coin_id, meta in coin_meta.items():
+        try:
             records = client.get_coin_history(coin_id, dt_from, dt_to)
-            for r in records:
-                r["id"] = coin_id
-                r["symbol"] = meta["symbol"]
-                r["name"] = meta["name"]
-            all_records.extend(records)
+        except Exception as e:
+            log.warning(f"Falha ao buscar {coin_id} em {dt}: {e}. Pulando moeda.")
+            continue
+        for r in records:
+            r["id"] = coin_id
+            r["symbol"] = meta["symbol"]
+            r["name"] = meta["name"]
+        day_records.extend(records)
 
-        log.info(f"  → {dt} concluído. Total acumulado: {len(all_records)} registros.")
-
-    return all_records
+    log.info(f"  → {dt} concluído. {len(day_records)} registros.")
+    return day_records
 
 
 def save_to_volume(spark, records: list[dict], output_path: str) -> None:
@@ -135,13 +135,13 @@ def main(argv=None):
     coin_meta = {c["id"]: {"symbol": c["symbol"], "name": c["name"]} for c in top_coins}
     log.info(f"Moedas obtidas: {len(coin_meta)}")
 
-    records = fetch_and_collect(client, coin_meta, start_date, end_date)
-
-    if not records:
-        log.warning("Nenhum dado retornado pela API. Encerrando.")
-        return
-
-    save_to_volume(spark, records, OUTPUT_PATH)
+    for single_date in pd.date_range(start_date, end_date):
+        dt = single_date.date()
+        day_records = fetch_day(client, coin_meta, dt)
+        if not day_records:
+            log.warning(f"Nenhum dado retornado pela API para {dt}.")
+            continue
+        save_to_volume(spark, day_records, OUTPUT_PATH)
 
 
 if __name__ == "__main__":

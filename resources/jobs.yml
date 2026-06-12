@@ -12,3 +12,9 @@ resources:
         - task_key: api_to_raw
           notebook_task:
             notebook_path: ../notebooks/run_api_to_raw.py
+
+        - task_key: dlt_pipeline
+          depends_on:
+            - task_key: api_to_raw
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.coingecko_dlt.id}
